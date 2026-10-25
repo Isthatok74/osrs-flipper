@@ -73,6 +73,16 @@ function wikiUrl(id) {
   return `https://prices.runescape.wiki/osrs/item/${id}`;
 }
 
+function CoinIcon() {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="12" />
+      <circle cx="16" cy="16" r="8" />
+      <path d="M19.6 11.8c-1-.8-2.1-1.2-3.5-1.2-2.1 0-3.6 1-3.6 2.6 0 3.9 7.1 1.7 7.1 5.3 0 1.7-1.5 2.8-3.8 2.8-1.5 0-2.9-.5-3.9-1.4M16 8.6v14.8" />
+    </svg>
+  );
+}
+
 function PricePair({ item, price, componentName, componentPlural, effectiveQuote, effectiveLabel, changedQuotes }) {
   return (
     <div className={`price-row ${effectiveQuote ? "with-effective" : ""}`}>
@@ -123,6 +133,7 @@ export default function FlipperDashboard() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState("");
   const [changedQuotes, setChangedQuotes] = useState(new Set());
+  const [refreshCycle, setRefreshCycle] = useState(0);
   const previousPricesRef = useRef({});
   const flashTimerRef = useRef(null);
 
@@ -132,6 +143,7 @@ export default function FlipperDashboard() {
   const outputPriceKey = strategy === "patient" ? "high" : "low";
 
   const loadPrices = useCallback(async () => {
+    setRefreshCycle((cycle) => cycle + 1);
     setStatus((current) => (current === "ready" ? "refreshing" : "loading"));
     setError("");
     try {
@@ -169,14 +181,12 @@ export default function FlipperDashboard() {
   }, []);
 
   useEffect(() => {
-    const startup = window.setTimeout(loadPrices, 0);
-    const timer = window.setInterval(loadPrices, REFRESH_INTERVAL);
+    const timer = window.setTimeout(loadPrices, refreshCycle === 0 ? 0 : REFRESH_INTERVAL);
     return () => {
-      window.clearTimeout(startup);
-      window.clearInterval(timer);
+      window.clearTimeout(timer);
       if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     };
-  }, [loadPrices]);
+  }, [loadPrices, refreshCycle]);
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -250,12 +260,21 @@ export default function FlipperDashboard() {
     <main>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="GE Workshop home">
-          <span className="brand-mark">GE</span>
+          <span className="brand-mark"><CoinIcon /></span>
           <span>Workshop</span>
         </a>
-        <div className={`live-status ${status}`}>
-          <i />
-          {status === "error" ? "Feed unavailable" : status === "loading" ? "Connecting" : "Live prices"}
+        <div
+          className={`refresh-meter ${status}`}
+          role="status"
+          aria-label="Live prices refresh every 15 seconds"
+        >
+          <div className="refresh-meter-copy">
+            <span>{status === "error" ? "Feed unavailable" : status === "loading" ? "Connecting" : status === "refreshing" ? "Refreshing" : "Live prices"}</span>
+            <small>15s</small>
+          </div>
+          <div className="refresh-track" aria-hidden="true">
+            <i key={refreshCycle} />
+          </div>
         </div>
       </header>
 
