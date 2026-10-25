@@ -201,12 +201,13 @@ export default function FlipperDashboard() {
   }, []);
 
   useEffect(() => {
-    function handlePricingShortcut(event) {
+    function handleKeyboardShortcut(event) {
       const target = event.target;
+      const key = event.key.toLowerCase();
       const isTyping = target instanceof HTMLElement
         && (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
       if (
-        event.key.toLowerCase() !== "x"
+        (key !== "x" && key !== "m")
         || event.repeat
         || event.metaKey
         || event.ctrlKey
@@ -215,12 +216,24 @@ export default function FlipperDashboard() {
       ) return;
 
       event.preventDefault();
-      setStrategy((current) => current === "patient" ? "instant" : "patient");
+      if (key === "x") {
+        setStrategy((current) => current === "patient" ? "instant" : "patient");
+        return;
+      }
+
+      const currentIndex = methods.findIndex((entry) => entry.id === methodId);
+      const nextMethod = methods[(currentIndex + 1) % methods.length].id;
+      setMethodId(nextMethod);
+      try {
+        window.localStorage.setItem(METHOD_STORAGE_KEY, nextMethod);
+      } catch {
+        // The shortcut still works for the current session without storage.
+      }
     }
 
-    window.addEventListener("keydown", handlePricingShortcut);
-    return () => window.removeEventListener("keydown", handlePricingShortcut);
-  }, []);
+    window.addEventListener("keydown", handleKeyboardShortcut);
+    return () => window.removeEventListener("keydown", handleKeyboardShortcut);
+  }, [methodId]);
 
   function handleMethodChange(event) {
     const nextMethod = event.target.value;
@@ -302,8 +315,8 @@ export default function FlipperDashboard() {
 
       <section className="control-bar" id="top" aria-label="Calculator controls">
         <label className="select-control method-select" htmlFor="method">
-          <span>Method</span>
-          <select id="method" value={methodId} onChange={handleMethodChange}>
+          <span>Method <kbd>M</kbd></span>
+          <select id="method" value={methodId} onChange={handleMethodChange} aria-keyshortcuts="m">
             {methods.map((entry) => <option value={entry.id} key={entry.id}>{entry.name}</option>)}
           </select>
         </label>
