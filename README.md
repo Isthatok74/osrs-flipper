@@ -7,6 +7,7 @@ Included methods:
 - Masori fortification using Armadylean plates from direct purchases or broken-down Armadyl armour.
 - Torva restoration using Bandosian components from direct purchases or broken-down Bandos armour.
 - Spirit shield assembly using a direct or player-blessed shield with spectral, arcane, or elysian sigils.
+- Cerberus boot upgrades covering eternal, pegasian, and primordial boots on one comparison page.
 
 ## Run locally
 

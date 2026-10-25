@@ -123,9 +123,55 @@ export const methods = [
       },
     ],
   },
+  {
+    id: "cerberus-boot-upgrades",
+    kind: "direct-recipes",
+    eyebrow: "Infuse → sell",
+    name: "Cerberus boot upgrades",
+    summary:
+      "Combine each Cerberus crystal with its matching base boots and sell the upgraded pair.",
+    componentLabel: "Boot and crystal inputs",
+    requirementLevel: "60",
+    requirementName: "Magic + Runecraft",
+    requirementNote: "Both skills must be level 60 and cannot be boosted. Each upgrade is irreversible.",
+    sources: [
+      { id: 6920, name: "Infinity boots", note: "Eternal boots input" },
+      { id: 13227, name: "Eternal crystal", note: "Eternal boots input" },
+      { id: 2577, name: "Ranger boots", note: "Pegasian boots input" },
+      { id: 13229, name: "Pegasian crystal", note: "Pegasian boots input" },
+      { id: 11840, name: "Dragon boots", note: "Primordial boots input" },
+      { id: 13231, name: "Primordial crystal", note: "Primordial boots input" },
+    ],
+    products: [
+      {
+        inputs: [
+          { id: 6920, name: "Infinity boots" },
+          { id: 13227, name: "Eternal crystal" },
+        ],
+        output: { id: 13235, name: "Eternal boots" },
+      },
+      {
+        inputs: [
+          { id: 2577, name: "Ranger boots" },
+          { id: 13229, name: "Pegasian crystal" },
+        ],
+        output: { id: 13237, name: "Pegasian boots" },
+      },
+      {
+        inputs: [
+          { id: 11840, name: "Dragon boots" },
+          { id: 13231, name: "Primordial crystal" },
+        ],
+        output: { id: 13239, name: "Primordial boots" },
+      },
+    ],
+  },
 ];
 
-export const allItemIds = methods.flatMap((method) => [
+export const allItemIds = [...new Set(methods.flatMap((method) => [
   ...method.sources.map((item) => item.id),
-  ...method.products.flatMap((product) => [product.input.id, product.output.id]),
-]);
+  ...method.products.flatMap((product) => [
+    ...(product.inputs ?? [product.input]).map((item) => item.id),
+    product.output.id,
+  ]),
+]))];
