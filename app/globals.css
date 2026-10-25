@@ -92,6 +92,16 @@ h2, h3, h4, p { margin-top: 0; }
 .freshness-dot.deep-orange { background: #b84b1d; }
 .freshness-dot.red { background: #b3261e; }
 .freshness-dot.unknown { background: #9b988e; }
+.price-flash {
+  display: inline-block;
+  border-radius: 3px;
+  animation: price-update-flash 1.4s ease-out;
+}
+@keyframes price-update-flash {
+  0% { color: var(--ink); background: #f7d45b; box-shadow: 0 0 0 4px rgba(247, 212, 91, .42); transform: scale(1.045); }
+  38% { background: rgba(247, 212, 91, .65); box-shadow: 0 0 0 2px rgba(247, 212, 91, .2); }
+  100% { background: transparent; box-shadow: none; transform: scale(1); }
+}
 .cheapest-card { display: flex; flex-direction: column; justify-content: space-between; gap: 20px; padding: 20px; background: var(--ink); color: white; }
 .cheapest-card .kicker { color: var(--gold); }
 .big-number { display: block; font-family: Georgia, serif; font-size: 27px; font-weight: 500; line-height: 1.1; }
@@ -129,6 +139,10 @@ dl .subtotal { margin: 4px 0; padding: 12px 0; border-top: 1px solid var(--line)
 .skeleton { height: 28px; background: linear-gradient(90deg, #e3dfd4 25%, #f2efe7 50%, #e3dfd4 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
 .skeleton.wide { width: 70%; }
 @keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .price-flash { animation: none; background: rgba(247, 212, 91, .45); }
+}
 
 footer { display: flex; justify-content: space-between; gap: 30px; padding: 18px 0 25px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 footer p { margin: 0; }

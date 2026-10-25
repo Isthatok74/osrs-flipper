@@ -23,7 +23,7 @@ Open <http://localhost:3000>.
 - **Instant execution** uses `high` for inputs and `low` for outputs.
 - Armadyl armour cost is divided by the number of Armadylean plates it yields.
 - Fortified revenue is reduced by the 2% Grand Exchange tax.
-- Prices refresh every 60 seconds and can be refreshed manually.
+- Prices refresh every 15 seconds and can be refreshed manually. Updated values flash briefly on screen.
 - Quote dots indicate freshness: green (≤5m), lime (≤15m), yellow (≤30m), orange (≤1h), deep orange (≤4h), and red (>4h).
 
 These prices are recent trades, not guaranteed offers. The calculator does not include opportunity costs or any untradeable material/action costs.
