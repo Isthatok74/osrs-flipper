@@ -207,7 +207,7 @@ export default function FlipperDashboard() {
       const isTyping = target instanceof HTMLElement
         && (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
       if (
-        (key !== "x" && key !== "m")
+        (key !== "x" && key !== "m" && key !== "r")
         || event.repeat
         || event.metaKey
         || event.ctrlKey
@@ -218,6 +218,10 @@ export default function FlipperDashboard() {
       event.preventDefault();
       if (key === "x") {
         setStrategy((current) => current === "patient" ? "instant" : "patient");
+        return;
+      }
+      if (key === "r") {
+        if (status !== "loading" && status !== "refreshing") loadPrices();
         return;
       }
 
@@ -233,7 +237,7 @@ export default function FlipperDashboard() {
 
     window.addEventListener("keydown", handleKeyboardShortcut);
     return () => window.removeEventListener("keydown", handleKeyboardShortcut);
-  }, [methodId]);
+  }, [loadPrices, methodId, status]);
 
   function handleMethodChange(event) {
     const nextMethod = event.target.value;
@@ -329,9 +333,15 @@ export default function FlipperDashboard() {
             <option value="instant">Instant execution</option>
           </select>
         </label>
-        <button className="refresh" onClick={loadPrices} disabled={status === "loading" || status === "refreshing"}>
+        <button
+          className="refresh"
+          onClick={loadPrices}
+          disabled={status === "loading" || status === "refreshing"}
+          aria-keyshortcuts="r"
+          title="Refresh prices (R)"
+        >
           <span aria-hidden="true">↻</span>
-          <b>{status === "refreshing" ? "Refreshing…" : "Refresh"}</b>
+          <b>{status === "refreshing" ? "Refreshing…" : <>Refresh <kbd>R</kbd></>}</b>
         </button>
       </section>
 
