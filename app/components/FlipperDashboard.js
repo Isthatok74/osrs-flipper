@@ -19,6 +19,12 @@ function formatCoins(value) {
   return Number.isFinite(value) ? `${coins.format(Math.round(value))} gp` : "—";
 }
 
+function formatProfit(value) {
+  if (!Number.isFinite(value)) return "—";
+  const rounded = Math.round(value);
+  return `${rounded > 0 ? "+" : ""}${coins.format(rounded)} gp`;
+}
+
 function formatAge(timestamp) {
   if (!timestamp) return "No trade data";
   const seconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
@@ -371,7 +377,7 @@ export default function FlipperDashboard() {
                 <div><dt>GE tax · 2%</dt><dd>− <FlashValue changed={outputChanged}>{formatCoins(product.tax)}</FlashValue></dd></div>
               </dl>
               <div className={`profit-total ${product.profit >= 0 ? "positive" : "negative"}`}>
-                <strong><FlashValue changed={productionChanged || outputChanged}>{formatCoins(product.profit)}</FlashValue></strong>
+                <strong><FlashValue changed={productionChanged || outputChanged}>{formatProfit(product.profit)}</FlashValue></strong>
                 <small>{Number.isFinite(product.profit) && Number.isFinite(product.productionCost)
                   ? `${((product.profit / product.productionCost) * 100).toFixed(2)}% return`
                   : "Awaiting trade data"}</small>
