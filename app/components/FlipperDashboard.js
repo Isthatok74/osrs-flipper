@@ -371,7 +371,6 @@ export default function FlipperDashboard() {
                 <div><dt>GE tax · 2%</dt><dd>− <FlashValue changed={outputChanged}>{formatCoins(product.tax)}</FlashValue></dd></div>
               </dl>
               <div className={`profit-total ${product.profit >= 0 ? "positive" : "negative"}`}>
-                <span>Net profit</span>
                 <strong><FlashValue changed={productionChanged || outputChanged}>{formatCoins(product.profit)}</FlashValue></strong>
                 <small>{Number.isFinite(product.profit) && Number.isFinite(product.productionCost)
                   ? `${((product.profit / product.productionCost) * 100).toFixed(2)}% return`

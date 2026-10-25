@@ -131,7 +131,7 @@ dl .subtotal { margin: 4px 0; padding: 12px 0; border-top: 1px solid var(--line)
 .profit-total { padding: 13px 14px; }
 .profit-total.positive { background: var(--green-pale); color: var(--green); }
 .profit-total.negative { background: var(--red-pale); color: var(--red); }
-.profit-total span, .profit-total small { display: block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.profit-total > span, .profit-total small { display: block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .profit-total strong { display: block; margin: 2px 0; font-family: Georgia, serif; font-size: 24px; }
 .market-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 13px; color: var(--muted); font-size: 10px; }
 .market-pair b { display: block; color: var(--ink); font-size: 11px; }
