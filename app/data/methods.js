@@ -1,4 +1,5 @@
 export const GE_TAX_RATE = 0.02;
+export const GE_TAX_CAP = 5_000_000;
 
 export const methods = [
   {

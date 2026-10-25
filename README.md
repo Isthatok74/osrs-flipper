@@ -22,7 +22,7 @@ Open <http://localhost:3000>.
 - **Patient offers** (default) uses the API's `low` price for inputs and `high` price for outputs.
 - **Instant execution** uses `high` for inputs and `low` for outputs.
 - Armadyl armour cost is divided by the number of Armadylean plates it yields.
-- Fortified revenue is reduced by the 2% Grand Exchange tax.
+- Final-sale revenue is reduced by the 2% Grand Exchange tax, capped at 5,000,000 gp per item.
 - Prices refresh every 15 seconds and can be refreshed manually. Updated values flash briefly on screen.
 - The header meter counts down to the next live-price refresh.
 - Press `X` to toggle between patient offers and instant execution.

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { allItemIds, GE_TAX_RATE, methods } from "../data/methods";
+import { allItemIds, GE_TAX_CAP, GE_TAX_RATE, methods } from "../data/methods";
 
 const API_URL = "https://prices.runescape.wiki/api/v2/osrs/latest";
 const REFRESH_INTERVAL = 15_000;
@@ -280,7 +280,9 @@ export default function FlipperDashboard() {
       const productionCost = Number.isFinite(inputCost) && Number.isFinite(plateCost)
         ? inputCost + plateCost
         : undefined;
-      const tax = Number.isFinite(outputRevenue) ? Math.floor(outputRevenue * GE_TAX_RATE) : undefined;
+      const tax = Number.isFinite(outputRevenue)
+        ? Math.min(Math.floor(outputRevenue * GE_TAX_RATE), GE_TAX_CAP)
+        : undefined;
       const netRevenue = Number.isFinite(outputRevenue) ? outputRevenue - tax : undefined;
       const profit = Number.isFinite(netRevenue) && Number.isFinite(productionCost)
         ? netRevenue - productionCost
@@ -402,7 +404,7 @@ export default function FlipperDashboard() {
       <section className="panel products-panel">
           <div className="panel-title">
             <div><span className="step">02</span><h3>Final products</h3></div>
-            <p>Uses the cheapest component route and {strategy === "patient" ? "patient offers" : "instant execution"}; profit includes 2% GE tax.</p>
+            <p>Uses the cheapest component route and {strategy === "patient" ? "patient offers" : "instant execution"}; profit includes 2% GE tax capped at 5m.</p>
         </div>
         <div className="product-grid">
           {analysis.products.map((product) => {
@@ -428,7 +430,7 @@ export default function FlipperDashboard() {
                 <div><dt>{method.componentPlural}</dt><dd><FlashValue changed={componentChanged}>{formatCoins(product.plateCost)}</FlashValue></dd></div>
                 <div className="subtotal"><dt>Production cost</dt><dd><FlashValue changed={productionChanged}>{formatCoins(product.productionCost)}</FlashValue></dd></div>
                 <div><dt>{strategy === "patient" ? "Patient-offer revenue" : "Instant-sell revenue"}</dt><dd><Quote value={product.outputRevenue} timestamp={product.outputTime} changed={outputChanged} /></dd></div>
-                <div><dt>GE tax · 2%</dt><dd>− <FlashValue changed={outputChanged}>{formatCoins(product.tax)}</FlashValue></dd></div>
+                <div><dt>GE tax · 2% · max 5m</dt><dd>− <FlashValue changed={outputChanged}>{formatCoins(product.tax)}</FlashValue></dd></div>
               </dl>
               <div className={`profit-total ${product.profit >= 0 ? "positive" : "negative"}`}>
                 <strong><FlashValue changed={productionChanged || outputChanged}>{formatProfit(product.profit)}</FlashValue></strong>
