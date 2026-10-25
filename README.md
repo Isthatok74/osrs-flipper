@@ -25,6 +25,7 @@ Open <http://localhost:3000>.
 - Fortified revenue is reduced by the 2% Grand Exchange tax.
 - Prices refresh every 15 seconds and can be refreshed manually. Updated values flash briefly on screen.
 - The header meter counts down to the next live-price refresh.
+- Press `X` to toggle between patient offers and instant execution.
 - Quote dots indicate freshness: green (≤5m), lime (≤15m), yellow (≤30m), orange (≤1h), deep orange (≤4h), and red (>4h).
 
 These prices are recent trades, not guaranteed offers. The calculator does not include opportunity costs or any untradeable material/action costs.

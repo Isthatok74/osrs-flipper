@@ -200,6 +200,28 @@ export default function FlipperDashboard() {
     return () => window.clearTimeout(restore);
   }, []);
 
+  useEffect(() => {
+    function handlePricingShortcut(event) {
+      const target = event.target;
+      const isTyping = target instanceof HTMLElement
+        && (target.isContentEditable || target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+      if (
+        event.key.toLowerCase() !== "x"
+        || event.repeat
+        || event.metaKey
+        || event.ctrlKey
+        || event.altKey
+        || isTyping
+      ) return;
+
+      event.preventDefault();
+      setStrategy((current) => current === "patient" ? "instant" : "patient");
+    }
+
+    window.addEventListener("keydown", handlePricingShortcut);
+    return () => window.removeEventListener("keydown", handlePricingShortcut);
+  }, []);
+
   function handleMethodChange(event) {
     const nextMethod = event.target.value;
     setMethodId(nextMethod);
@@ -286,8 +308,8 @@ export default function FlipperDashboard() {
           </select>
         </label>
         <label className="select-control" htmlFor="strategy">
-          <span>Pricing</span>
-          <select id="strategy" value={strategy} onChange={(event) => setStrategy(event.target.value)}>
+          <span>Pricing <kbd>X</kbd></span>
+          <select id="strategy" value={strategy} onChange={(event) => setStrategy(event.target.value)} aria-keyshortcuts="x">
             <option value="patient">Patient offers</option>
             <option value="instant">Instant execution</option>
           </select>
