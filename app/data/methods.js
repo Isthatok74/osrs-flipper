@@ -166,6 +166,22 @@ export const methods = [
       },
     ],
   },
+  {
+    id: "elemental-battlestaff-lows",
+    kind: "price-history",
+    eyebrow: "Lowball offer guide",
+    name: "Elemental battlestaff lows",
+    summary:
+      "Compare recent low-side trade floors for air, water, earth, and fire battlestaves.",
+    componentLabel: "Historical low prices",
+    sources: [
+      { id: 1397, name: "Air battlestaff" },
+      { id: 1399, name: "Earth battlestaff" },
+      { id: 1395, name: "Water battlestaff" },
+      { id: 1393, name: "Fire battlestaff" },
+    ],
+    products: [],
+  },
 ];
 
 export const allItemIds = [...new Set(methods.flatMap((method) => [

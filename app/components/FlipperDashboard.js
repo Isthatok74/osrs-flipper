@@ -4,15 +4,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { allItemIds, GE_TAX_CAP, GE_TAX_RATE, methods } from "../data/methods";
 
 const API_URL = "https://prices.runescape.wiki/api/v2/osrs/latest";
+const HISTORY_API_URL = "https://prices.runescape.wiki/api/v1/osrs/timeseries";
 const REFRESH_INTERVAL = 15_000;
+const HISTORY_REFRESH_INTERVAL = 5 * 60_000;
 const FLASH_DURATION = 1_400;
 const METHOD_STORAGE_KEY = "ge-workshop-method";
+const HISTORY_METHOD_ID = "elemental-battlestaff-lows";
+const HISTORY_ITEM_IDS = methods.find((method) => method.id === HISTORY_METHOD_ID).sources.map((item) => item.id);
+const HISTORY_PERIODS = [
+  { key: "24h", label: "24h low", seconds: 24 * 60 * 60, timestep: "5m" },
+  { key: "3d", label: "3d low", seconds: 3 * 24 * 60 * 60, timestep: "1h" },
+  { key: "7d", label: "7d low", seconds: 7 * 24 * 60 * 60, timestep: "1h" },
+];
 
 const coins = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
 const time = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
+});
+const historyTime = new Intl.DateTimeFormat("en-GB", {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
 });
 
 function formatCoins(value) {
@@ -23,6 +38,17 @@ function formatProfit(value) {
   if (!Number.isFinite(value)) return "—";
   const rounded = Math.round(value);
   return `${rounded > 0 ? "+" : ""}${coins.format(rounded)} gp`;
+}
+
+function findLowestPrice(points, seconds) {
+  const cutoff = Math.floor(Date.now() / 1000) - seconds;
+  return points.reduce((lowest, point) => {
+    if (point.timestamp < cutoff || !Number.isFinite(point.avgLowPrice) || point.lowPriceVolume <= 0) return lowest;
+    if (!lowest || point.avgLowPrice < lowest.value) {
+      return { value: point.avgLowPrice, timestamp: point.timestamp };
+    }
+    return lowest;
+  }, undefined);
 }
 
 function formatAge(timestamp) {
@@ -126,6 +152,50 @@ function LoadingRows({ count, withEffective }) {
   ));
 }
 
+function HistoryPanel({ items, history, prices, changedHistory, changedQuotes, status }) {
+  return (
+    <section className="panel history-panel">
+      <div className="panel-title">
+        <div><span className="step">01</span><h3>Historical low prices</h3></div>
+        <p>24h uses 5-minute low-side averages; 3d and 7d use hourly low-side averages. History refreshes every 5 minutes.</p>
+      </div>
+      <div className="history-head">
+        <span>Item</span>
+        <span>Current low</span>
+        {HISTORY_PERIODS.map((period) => <span key={period.key}>{period.label}</span>)}
+      </div>
+      {status === "loading" && !Object.keys(history).length ? (
+        <LoadingRows count={items.length} />
+      ) : items.map((item) => (
+        <div className="history-row" key={item.id}>
+          <div className="item-name">
+            <a href={wikiUrl(item.id)} target="_blank" rel="noreferrer">{item.name}<span aria-hidden="true">↗</span></a>
+          </div>
+          <div className="history-cell">
+            <span>Current low</span>
+            <strong><Quote
+              value={prices[item.id]?.low}
+              timestamp={prices[item.id]?.lowTime}
+              changed={changedQuotes.has(`${item.id}:low`)}
+            /></strong>
+            <small>{formatAge(prices[item.id]?.lowTime)}</small>
+          </div>
+          {HISTORY_PERIODS.map((period) => {
+            const quote = history[item.id]?.[period.key];
+            return (
+              <div className="history-cell" key={period.key}>
+                <span>{period.label}</span>
+                <strong><FlashValue changed={changedHistory.has(`${item.id}:${period.key}`)}>{formatCoins(quote?.value)}</FlashValue></strong>
+                <small>{quote?.timestamp ? historyTime.format(new Date(quote.timestamp * 1000)) : "No trade data"}</small>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </section>
+  );
+}
+
 export default function FlipperDashboard() {
   const [methodId, setMethodId] = useState(methods[0].id);
   const [strategy, setStrategy] = useState("patient");
@@ -135,11 +205,18 @@ export default function FlipperDashboard() {
   const [error, setError] = useState("");
   const [changedQuotes, setChangedQuotes] = useState(new Set());
   const [refreshCycle, setRefreshCycle] = useState(0);
+  const [historyPrices, setHistoryPrices] = useState({});
+  const [historyStatus, setHistoryStatus] = useState("idle");
+  const [historyError, setHistoryError] = useState("");
+  const [changedHistory, setChangedHistory] = useState(new Set());
   const previousPricesRef = useRef({});
   const flashTimerRef = useRef(null);
+  const previousHistoryRef = useRef({});
+  const historyFlashTimerRef = useRef(null);
 
   const method = methods.find((entry) => entry.id === methodId) ?? methods[0];
   const isDirectRecipes = method.kind === "direct-recipes";
+  const isPriceHistory = method.kind === "price-history";
   const showEffectiveSources = Boolean(method.effectiveLabel);
   const inputPriceKey = strategy === "patient" ? "low" : "high";
   const outputPriceKey = strategy === "patient" ? "high" : "low";
@@ -182,6 +259,55 @@ export default function FlipperDashboard() {
     }
   }, []);
 
+  const loadHistory = useCallback(async () => {
+    setHistoryStatus((current) => current === "ready" ? "refreshing" : "loading");
+    setHistoryError("");
+    try {
+      const entries = await Promise.all(HISTORY_ITEM_IDS.map(async (id) => {
+        const [fiveMinuteResponse, hourlyResponse] = await Promise.all([
+          fetch(`${HISTORY_API_URL}?timestep=5m&id=${id}`, { cache: "no-store" }),
+          fetch(`${HISTORY_API_URL}?timestep=1h&id=${id}`, { cache: "no-store" }),
+        ]);
+        if (!fiveMinuteResponse.ok || !hourlyResponse.ok) {
+          throw new Error(`History service returned ${fiveMinuteResponse.ok ? hourlyResponse.status : fiveMinuteResponse.status}`);
+        }
+        const [fiveMinute, hourly] = await Promise.all([
+          fiveMinuteResponse.json(),
+          hourlyResponse.json(),
+        ]);
+        return [id, {
+          "24h": findLowestPrice(fiveMinute.data ?? [], HISTORY_PERIODS[0].seconds),
+          "3d": findLowestPrice(hourly.data ?? [], HISTORY_PERIODS[1].seconds),
+          "7d": findLowestPrice(hourly.data ?? [], HISTORY_PERIODS[2].seconds),
+        }];
+      }));
+      const nextHistory = Object.fromEntries(entries);
+      const previous = previousHistoryRef.current;
+      if (Object.keys(previous).length > 0) {
+        const changes = new Set();
+        HISTORY_ITEM_IDS.forEach((id) => HISTORY_PERIODS.forEach((period) => {
+          if (nextHistory[id]?.[period.key]?.value !== previous[id]?.[period.key]?.value) {
+            changes.add(`${id}:${period.key}`);
+          }
+        }));
+        if (changes.size > 0) {
+          if (historyFlashTimerRef.current) window.clearTimeout(historyFlashTimerRef.current);
+          setChangedHistory(changes);
+          historyFlashTimerRef.current = window.setTimeout(() => {
+            setChangedHistory(new Set());
+            historyFlashTimerRef.current = null;
+          }, FLASH_DURATION);
+        }
+      }
+      previousHistoryRef.current = nextHistory;
+      setHistoryPrices(nextHistory);
+      setHistoryStatus("ready");
+    } catch (requestError) {
+      setHistoryStatus("error");
+      setHistoryError(requestError instanceof Error ? requestError.message : "Could not load price history");
+    }
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(loadPrices, refreshCycle === 0 ? 0 : REFRESH_INTERVAL);
     return () => {
@@ -189,6 +315,22 @@ export default function FlipperDashboard() {
       if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current);
     };
   }, [loadPrices, refreshCycle]);
+
+  useEffect(() => {
+    if (!isPriceHistory) return undefined;
+    const startup = window.setTimeout(loadHistory, 0);
+    const timer = window.setInterval(loadHistory, HISTORY_REFRESH_INTERVAL);
+    return () => {
+      window.clearTimeout(startup);
+      window.clearInterval(timer);
+      if (historyFlashTimerRef.current) window.clearTimeout(historyFlashTimerRef.current);
+    };
+  }, [isPriceHistory, loadHistory]);
+
+  const refreshAll = useCallback(() => {
+    loadPrices();
+    if (isPriceHistory) loadHistory();
+  }, [isPriceHistory, loadHistory, loadPrices]);
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -223,7 +365,11 @@ export default function FlipperDashboard() {
         return;
       }
       if (key === "r") {
-        if (status !== "loading" && status !== "refreshing") loadPrices();
+        if (
+          status !== "loading"
+          && status !== "refreshing"
+          && (!isPriceHistory || (historyStatus !== "loading" && historyStatus !== "refreshing"))
+        ) refreshAll();
         return;
       }
 
@@ -239,7 +385,7 @@ export default function FlipperDashboard() {
 
     window.addEventListener("keydown", handleKeyboardShortcut);
     return () => window.removeEventListener("keydown", handleKeyboardShortcut);
-  }, [loadPrices, methodId, status]);
+  }, [historyStatus, isPriceHistory, methodId, refreshAll, status]);
 
   function handleMethodChange(event) {
     const nextMethod = event.target.value;
@@ -252,7 +398,7 @@ export default function FlipperDashboard() {
   }
 
   const analysis = useMemo(() => {
-    const routes = isDirectRecipes ? [] : method.routes ?? method.sources.map((source, index) => ({
+    const routes = isDirectRecipes || isPriceHistory ? [] : method.routes ?? method.sources.map((source, index) => ({
       name: source.name,
       action: index === 0
         ? `Buy ${source.name} directly.`
@@ -309,7 +455,7 @@ export default function FlipperDashboard() {
     });
 
     return { sourceCosts, cheapest, products };
-  }, [inputPriceKey, isDirectRecipes, method, outputPriceKey, prices]);
+  }, [inputPriceKey, isDirectRecipes, isPriceHistory, method, outputPriceKey, prices]);
 
   return (
     <main>
@@ -349,8 +495,8 @@ export default function FlipperDashboard() {
         </label>
         <button
           className="refresh"
-          onClick={loadPrices}
-          disabled={status === "loading" || status === "refreshing"}
+          onClick={refreshAll}
+          disabled={status === "loading" || status === "refreshing" || (isPriceHistory && (historyStatus === "loading" || historyStatus === "refreshing"))}
           aria-keyshortcuts="r"
           title="Refresh prices (R)"
         >
@@ -373,6 +519,25 @@ export default function FlipperDashboard() {
         </div>
       )}
 
+      {isPriceHistory ? (
+        <>
+          {historyStatus === "error" && (
+            <div className="error-banner" role="alert">
+              <span><strong>Price history unavailable.</strong> {historyError}</span>
+              <button onClick={loadHistory}>Try again</button>
+            </div>
+          )}
+          <HistoryPanel
+            items={method.sources}
+            history={historyPrices}
+            prices={prices}
+            changedHistory={changedHistory}
+            changedQuotes={changedQuotes}
+            status={historyStatus}
+          />
+        </>
+      ) : (
+      <>
       <section className="source-layout">
         <div className="panel source-panel">
           <div className="panel-title">
@@ -506,6 +671,8 @@ export default function FlipperDashboard() {
           })}
         </div>
       </section>
+      </>
+      )}
 
       <footer>
         <p>Prices from the OSRS Wiki real-time price API. Recent trades are indicative, not guaranteed.</p>

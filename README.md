@@ -8,6 +8,7 @@ Included methods:
 - Torva restoration using Bandosian components from direct purchases or broken-down Bandos armour.
 - Spirit shield assembly using a direct or player-blessed shield with spectral, arcane, or elysian sigils.
 - Cerberus boot upgrades covering eternal, pegasian, and primordial boots on one comparison page.
+- Elemental battlestaff market floors showing current, 24-hour, 3-day, and 7-day low-side prices.
 
 ## Run locally
 
