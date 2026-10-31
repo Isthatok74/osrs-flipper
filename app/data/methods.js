@@ -37,6 +37,15 @@ export const methods = [
         output: { id: 27238, name: "Masori body (f)" },
         components: 4,
       },
+      {
+        inputs: [
+          { id: 27226, name: "Masori mask" },
+          { id: 27229, name: "Masori body" },
+          { id: 27232, name: "Masori chaps" },
+        ],
+        output: { id: 27355, name: "Masori armour set (f)" },
+        components: 8,
+      },
     ],
   },
   {

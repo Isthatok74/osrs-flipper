@@ -424,19 +424,19 @@ export default function FlipperDashboard() {
     const cheapest = sourceCosts.sort((a, b) => a.perPlate - b.perPlate)[0];
 
     const products = method.products.map((product) => {
-      const recipeInputs = isDirectRecipes
+      const recipeInputs = product.inputs
         ? product.inputs.map((input) => ({
           ...input,
           cost: prices[input.id]?.[inputPriceKey],
           time: prices[input.id]?.[`${inputPriceKey}Time`],
         }))
         : undefined;
-      const inputCost = isDirectRecipes
+      const inputCost = recipeInputs
         ? recipeInputs.reduce((total, input) => total + (input.cost ?? Number.NaN), 0)
         : prices[product.input.id]?.[inputPriceKey];
       const outputRevenue = prices[product.output.id]?.[outputPriceKey];
       const recipeTimes = recipeInputs?.map((input) => input.time).filter(Number.isFinite) ?? [];
-      const inputTime = isDirectRecipes
+      const inputTime = recipeInputs
         ? (recipeTimes.length === recipeInputs.length ? Math.min(...recipeTimes) : undefined)
         : prices[product.input.id]?.[`${inputPriceKey}Time`];
       const outputTime = prices[product.output.id]?.[`${outputPriceKey}Time`];
@@ -613,12 +613,12 @@ export default function FlipperDashboard() {
               ? `Adds both recipe inputs using ${strategy === "patient" ? "patient offers" : "instant execution"}; profit includes capped GE tax.`
               : `Uses the cheapest component route and ${strategy === "patient" ? "patient offers" : "instant execution"}; profit includes 2% GE tax capped at 5m.`}</p>
         </div>
-        <div className="product-grid">
+        <div className={`product-grid ${analysis.products.length === 4 ? "four-products" : ""}`}>
           {analysis.products.map((product) => {
             const componentChanged = !isDirectRecipes && analysis.cheapest?.inputs.some(
               (input) => changedQuotes.has(`${input.id}:${inputPriceKey}`),
             );
-            const inputChanged = isDirectRecipes
+            const inputChanged = product.recipeInputs
               ? product.recipeInputs.some((input) => changedQuotes.has(`${input.id}:${inputPriceKey}`))
               : changedQuotes.has(`${product.input.id}:${inputPriceKey}`);
             const outputChanged = changedQuotes.has(`${product.output.id}:${outputPriceKey}`);
@@ -637,7 +637,7 @@ export default function FlipperDashboard() {
                 </span>
               </div>
               <dl>
-                {isDirectRecipes ? product.recipeInputs.map((input) => (
+                {product.recipeInputs ? product.recipeInputs.map((input) => (
                   <div key={input.id}>
                     <dt><a href={wikiUrl(input.id)} target="_blank" rel="noreferrer">{input.name} ↗</a></dt>
                     <dd><Quote value={input.cost} timestamp={input.time} changed={changedQuotes.has(`${input.id}:${inputPriceKey}`)} /></dd>
@@ -659,7 +659,7 @@ export default function FlipperDashboard() {
                   : "Awaiting trade data"}</small>
               </div>
               <div className="market-pair">
-                {!isDirectRecipes && <>
+                {product.input && <>
                   <span>Input buy <b><Quote value={prices[product.input.id]?.high} timestamp={prices[product.input.id]?.highTime} changed={changedQuotes.has(`${product.input.id}:high`)} /></b></span>
                   <span>Input sell <b><Quote value={prices[product.input.id]?.low} timestamp={prices[product.input.id]?.lowTime} changed={changedQuotes.has(`${product.input.id}:low`)} /></b></span>
                 </>}
