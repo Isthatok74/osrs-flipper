@@ -80,6 +80,15 @@ export const methods = [
         output: { id: 26386, name: "Torva platelegs" },
         components: 2,
       },
+      {
+        inputs: [
+          { id: 26376, name: "Torva full helm (damaged)" },
+          { id: 26378, name: "Torva platebody (damaged)" },
+          { id: 26380, name: "Torva platelegs (damaged)" },
+        ],
+        output: { id: 31145, name: "Torva armour set" },
+        components: 5,
+      },
     ],
   },
   {
