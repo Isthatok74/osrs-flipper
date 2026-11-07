@@ -185,6 +185,44 @@ export const methods = [
     ],
   },
   {
+    id: "etched-amulet-upgrades",
+    kind: "direct-recipes",
+    eyebrow: "Etch → combine → sell",
+    name: "Etched amulet upgrades",
+    summary:
+      "Combine etched boss fangs with high-level Zenyte jewellery and sell the upgraded amulet or necklace.",
+    componentLabel: "Jewellery and etched fang inputs",
+    requirementLevel: "84–86",
+    requirementName: "Crafting",
+    requirementNote:
+      "Rupture requires level 84 Crafting; rancour requires level 86. Both upgrades are irreversible.",
+    resultNote: "Each upgraded item is tradeable on the Grand Exchange.",
+    sources: [
+      { id: 19553, name: "Amulet of torture", note: "Amulet of rancour input" },
+      { id: 33534, name: "Etched araxyte fang", note: "Amulet of rancour input" },
+      { id: 19547, name: "Necklace of anguish", note: "Necklace of rupture input" },
+      { id: 33636, name: "Etched elder venator fang", note: "Necklace of rupture input" },
+    ],
+    products: [
+      {
+        inputs: [
+          { id: 19553, name: "Amulet of torture" },
+          { id: 33534, name: "Etched araxyte fang" },
+        ],
+        output: { id: 29801, name: "Amulet of rancour" },
+        requirement: "level 86 Crafting",
+      },
+      {
+        inputs: [
+          { id: 19547, name: "Necklace of anguish" },
+          { id: 33636, name: "Etched elder venator fang" },
+        ],
+        output: { id: 33639, name: "Necklace of rupture" },
+        requirement: "level 84 Crafting",
+      },
+    ],
+  },
+  {
     id: "elemental-battlestaff-lows",
     kind: "price-history",
     eyebrow: "Lowball offer guide",

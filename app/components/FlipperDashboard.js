@@ -543,7 +543,7 @@ export default function FlipperDashboard() {
           <div className="panel-title">
             <div><span className="step">01</span><h3>{method.componentLabel}</h3></div>
             <p>{isDirectRecipes
-              ? `Live buy and sell prices for every base boot and matching crystal.`
+              ? `Live buy and sell prices for every recipe input.`
               : method.routes
               ? `Compares direct purchase with the combined ${strategy === "patient" ? "instant-sell" : "instant-buy"} price of every recipe input.`
               : `Effective component cost uses each item's ${strategy === "patient" ? "instant-sell" : "instant-buy"} price divided by its yield.`}</p>
@@ -584,7 +584,7 @@ export default function FlipperDashboard() {
             </div>
             <div className="route-detail">
               <p>{method.requirementNote}</p>
-              <small>Each finished pair is tradeable on the Grand Exchange.</small>
+              <small>{method.resultNote ?? "Each finished pair is tradeable on the Grand Exchange."}</small>
             </div>
           </aside>
         ) : (
@@ -628,7 +628,7 @@ export default function FlipperDashboard() {
               <div className="product-top">
                 <div>
                   <span className="recipe-count">{isDirectRecipes
-                    ? `${product.recipeInputs.length} inputs · level ${method.requirementLevel}`
+                    ? `${product.recipeInputs.length} inputs · ${product.requirement ?? `level ${method.requirementLevel}`}`
                     : `${product.components} ${product.components === 1 ? method.componentName : method.componentPlural}`}</span>
                   <h4><a href={wikiUrl(product.output.id)} target="_blank" rel="noreferrer">{product.output.name} ↗</a></h4>
                 </div>
